@@ -1,0 +1,103 @@
+# Branched polymer diffusion in a confined environment
+
+units         lj
+atom_style    full
+dimension     3
+
+boundary p p p
+neighbor 0.8 bin
+
+read_data ecm.data
+read_data drug.data add append shift 30.1 30.1 30.1
+write_data system.data
+
+group matrix  type 1 2
+group polymer subtract all matrix
+####################################
+####  POTENTIALS
+####################################
+
+bond_style    harmonic
+bond_coeff    * 1000.0 0.97
+bond_coeff    1 1000.0 0.97
+special_bonds fene
+
+pair_style    soft 1.0
+pair_coeff    * * 0.0
+variable prefactor equal ramp(0,300)
+fix rampSoft all adapt 1 pair soft a * * v_prefactor
+
+####################################
+####  VARIABLES DEFINITION
+####################################
+
+variable Temp equal 1.0 
+variable Press equal 0.0
+variable dt equal 0.005
+variable Tdamping equal 100*${dt}
+variable Pdamping equal 1000*${dt}
+variable thermoT equal 10000
+
+####################################
+#### THERMO-STYLE
+####################################
+
+thermo  ${thermoT}
+thermo_style	custom step time temp vol press ebond epair eangle ke etotal enthalpy 
+thermo_modify line yaml format none
+
+####################################
+#### INTEGRATION
+####################################
+
+variable     velSeed equal 721333
+velocity     all create ${Temp} ${velSeed}
+timestep     ${dt}
+
+minimize 0.0 1.0e-8 1000 100000
+####################################
+#### RELAX SOFT
+####################################
+
+fix nvt1 all nvt temp ${Temp} ${Temp} ${Tdamping}
+reset_timestep 0
+run 100000
+unfix nvt1
+unfix rampSoft
+write_data relaxed.data
+####################################
+#### EQUILIBRATION
+####################################
+
+# change to LJ interactions
+pair_style lj/cut 1.12 
+pair_coeff    * * 1.0 1.0
+
+fix stabilize all momentum 1 linear 1 1 1
+fix nve1 all nve
+fix solvent all langevin ${Temp} ${Temp} 100.0 ${velSeed}
+
+reset_timestep 0
+run 1000000
+
+dump mydump all custom 1000000 traj_lin.dat id type xu yu zu vx vy vz fx fy fz
+dump_modify mydump sort id
+
+variable step equal logfreq(1,9,10)
+dump mydump2 all custom 1 traj_log.dat id type xu yu zu vx vy vz fx fy fz
+dump_modify mydump2 every v_step first yes
+dump_modify mydump2 sort id
+
+variable f file timesteps.txt
+variable stepD equal next(f)
+dump dumpNP polymer custom 1 ConfNP_*.dat id type xu yu zu vx vy vz fx fy fz
+dump_modify dumpNP every v_stepD first yes
+dump_modify dumpNP sort id
+
+restart 1000000  restart1.bin restart2.bin
+
+reset_timestep 0
+
+run 500000000 upto
+
+write_data final.data
