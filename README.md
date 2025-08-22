@@ -1,4 +1,4 @@
-# confined-polymer-dynamics
+# Machine learning of the anomalous diffusion of branched polymers in crosslinked networks
 
 This repository contains the LAMMPS code used in our paper to simulate the dynamics of branched polymers in confined environments. You can read our paper [here](). 
 
