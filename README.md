@@ -1,6 +1,6 @@
 # Machine learning of the anomalous diffusion of branched polymers in crosslinked networks
 
-This repository contains the LAMMPS code used in our paper to simulate the dynamics of branched polymers in confined environments. You can read our paper [here](). 
+This repository contains the LAMMPS code used in our paper to simulate the dynamics of branched polymers in confined environments. You can read our paper [here](https://pubs.rsc.org/en/content/articlelanding/2025/sm/d5sm00851d). 
 
 To run the script, execute
 
